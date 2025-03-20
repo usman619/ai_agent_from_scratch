@@ -1,7 +1,6 @@
-from os import system
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama import OllamaLLM
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 
@@ -15,10 +14,10 @@ llm = ChatGoogleGenerativeAI(
             api_key=gemini_api_key,
         )
 # Local Deepseek LLM
-local_llm = OllamaLLM(
-        model="deepseek-r1:1.5b", 
-        base_url="http://localhost:11434",
-        )
+# local_llm = OllamaLLM(
+#         model="deepseek-r1:1.5b", 
+#         base_url="http://localhost:11434",
+#         )
 
 # Output Parser
 parser = PydanticOutputParser(pydantic_object=ResearchResponse)
@@ -36,7 +35,8 @@ prompt = ChatPromptTemplate.from_messages(
         ),
         ("placeholder", "{chat_history}",),
         ("human", "{query}"),
-        ("placeholder", "{agent_scratchpad}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+        # ("placeholder", "{agent_scratchpad}"),
     ]
 ).partial(format_instructions=parser.get_format_instructions())
 
@@ -51,7 +51,7 @@ agent = create_tool_calling_agent(
     tools=tools
 )
 
-query = input("What can I help you with today?\n > ")
+query = input("What can I help you with today?\n ❯ ")
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 raw_response = agent_executor.invoke({"query": query})
